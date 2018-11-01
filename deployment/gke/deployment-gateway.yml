@@ -31,7 +31,7 @@ spec:
         - name: google-application-credentials
           mountPath: "/etc/GOOGLE_APPLICATION_CREDENTIALS"
           readOnly: true
-        image: nebulaepyxis/emigateway:1.0.2
+        image: nebulaepyxis/emigateway:1.0.3
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -44,6 +44,9 @@ spec:
           # after pod startup, before applying health checking
           initialDelaySeconds: 5
           timeoutSeconds: 10
+        resources:
+          requests:
+            cpu: "50m"
         env:
         - name: NODE_ENV
           value: production
