@@ -81,7 +81,6 @@ class PubSubBroker {
             filter(msg => msg),
             filter(msg => msg.topic === this.gatewayRepliesTopic),
             filter(msg => !ignoreSelfEvents || msg.attributes.senderId !== this.senderId),
-            //.do(msg => console.log("msg.correlationId => ",msg.correlationId, " Correlation => ", correlationId))
             filter(msg => msg && msg.correlationId === correlationId),
             map(msg => msg.data),
             timeout(timeoutLimit),
