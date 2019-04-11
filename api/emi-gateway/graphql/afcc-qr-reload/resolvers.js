@@ -1,23 +1,25 @@
 const withFilter = require("graphql-subscriptions").withFilter;
 const PubSub = require("graphql-subscriptions").PubSub;
 const pubsub = new PubSub();
-const Rx = require("rxjs");
 const broker = require("../../broker/BrokerFactory")();
 const superagent = require('superagent');
+const { of, Observable, defer } = require('rxjs');
+const { map, mergeMap, catchError, tap } = require('rxjs/operators');
 
 function getResponseFromBackEnd$(response) {
-    return Rx.Observable.of(response)
-        .map(resp => {
+    return of(response)
+    .pipe(
+        map(resp => {
             if (resp.result.code != 200) {
                 const err = new Error();
                 err.name = 'Error';
                 err.message = resp.result.error;
-                // this[Symbol()] = resp.result.error;
                 Error.captureStackTrace(err, 'Error');
                 throw err;
             }
             return resp.data;
-        });
+        })
+    );
 }
 
 
@@ -28,9 +30,10 @@ module.exports = {
     Query: {
         getSamData(root, args, context) {
             const timestamp = parseInt(new Date().getTime()/1000)
-            return Rx.Observable.of(args)
-                .mergeMap(data => {
-                    return Rx.Observable.defer(() => {
+            return of(args)
+            .pipe(
+                mergeMap(data => {
+                    return defer(() => {
                         const cardId = data.cardId;
                         const id = (Math.floor(Math.random() * (9000 - 0)) + 0);
                         return superagent
@@ -39,20 +42,11 @@ module.exports = {
                             "tagid": parseInt(cardId), "value": args.value })
                             .set('accept', 'json')
                     })
-                })
-                .map(result => JSON.parse(result.res.text))
-                .do(logTest => console.log('llega del del rest: ',logTest))
-                .toPromise();
-                //*/
-            /*
-                return Rx.Observable.of({id: args.cardId,
-                    timeStamp: 1537601970000,
-                    value: args.value,
-                    tagId: 4334535,
-                    sign: "00112233445566778899AABBCCDDEEFF"
-                })
-                    .toPromise();
-                    */
+                }),
+                map(result => JSON.parse(result.res.text)),
+                tap(logTest => console.log('llega del del rest: ',logTest))
+            )
+            .toPromise();
         }
     },
 
